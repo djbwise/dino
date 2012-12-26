@@ -1,4 +1,6 @@
 #include <Servo.h>
+#include <OneWire.h> 
+
 
 bool debug = false;
 
@@ -35,40 +37,36 @@ void process() {
   cmd[2] = '\0';
   strncpy(pin, messageBuffer + 2, 2);
   pin[2] = '\0';
+  strncpy(val, messageBuffer + 4, 3);
+  val[3] = '\0';
+  strncpy(aux, messageBuffer + 7, 3);
+  aux[3] = '\0';
 
-  if (atoi(cmd) > 90) {
-    strncpy(val, messageBuffer + 4, 2);
-    val[2] = '\0';
-    strncpy(aux, messageBuffer + 6, 3);
-    aux[3] = '\0';
-  } else {
-    strncpy(val, messageBuffer + 4, 3);
-    val[4] = '\0';
-    strncpy(aux, messageBuffer + 7, 3);
-    aux[4] = '\0';
-  }
 
   if (debug) {
     Serial.println(messageBuffer);
+    //Serial.println(cmd);
+    //Serial.println(pin);
+    //Serial.println(val);
+    //Serial.println(aux);
   }
+  
   int cmdid = atoi(cmd);
 
-  // Serial.println(cmd);
-  // Serial.println(pin);
-  // Serial.println(val);
-  // Serial.println(aux);
-
   switch(cmdid) {
-    case 0:  sm(pin,val);              break;
-    case 1:  dw(pin,val);              break;
-    case 2:  dr(pin,val);              break;
-    case 3:  aw(pin,val);              break;
-    case 4:  ar(pin,val);              break;
-    case 97: handlePing(pin,val,aux);  break;
-    case 98: handleServo(pin,val,aux); break;
-    case 99: toggleDebug(val);         break;
-    default:                           break;
+    case 0:  sm(pin,val);               break;
+    case 1:  dw(pin,val);               break;
+    case 2:  dr(pin,val);               break;
+    case 3:  aw(pin,val);               break;
+    case 4:  ar(pin,val);               break;
+    case 96: handleOneWire(pin,val,aux);break;
+    case 97: handlePing(pin,val,aux);   break;
+    case 98: handleServo(pin,val,aux);  break;
+    case 99: toggleDebug(val);          break;
+    default:                            break;
   }
+  
+  //Serial.flush();
 }
 
 /*
@@ -248,4 +246,82 @@ void handleServo(char *pin, char *val, char *aux) {
     sprintf(m, "%s::read::%03d", pin, sval);
     Serial.println(m);
   }
+}
+
+// Method that uses OneWire library for getting temp from the sensor
+float getTemp(OneWire ds){
+  //returns the temperature from one DS18S20 in DEG Celsius
+
+  byte data[12];
+  byte addr[8];
+
+  if ( !ds.search(addr)) {
+      //no more sensors on chain, reset search
+      ds.reset_search();
+      return -1000;
+  }
+
+  if ( OneWire::crc8( addr, 7) != addr[7]) {
+      Serial.println("CRC is not valid!");
+      return -1000;
+  }
+
+  if ( addr[0] != 0x10 && addr[0] != 0x28) {
+      Serial.print("Device is not recognized");
+      return -1000;
+  }
+
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44,1); // start conversion, with parasite power on at the end
+
+  byte present = ds.reset();
+  ds.select(addr);    
+  ds.write(0xBE); // Read Scratchpad
+
+  
+  for (int i = 0; i < 9; i++) { // we need 9 bytes
+    data[i] = ds.read();
+  }
+  
+  ds.reset_search();
+  
+  byte MSB = data[1];
+  byte LSB = data[0];
+
+  float tempRead = ((MSB << 8) | LSB); //using two's compliment
+  float TemperatureSum = tempRead / 16;
+  
+  return TemperatureSum;
+  
+}
+
+/*
+ * Handle OneWire commands
+ * attach, detach
+ */
+void handleOneWire(char *pin, char *val, char *aux) {
+   
+  int p = getPin(pin);  
+
+  // 00(0) Detach //might not ever need this
+  if (atoi(val) == 0) {
+    
+      Serial.println(pin);
+
+  // 01(1) read 
+  } else if (atoi(val) == 1) {
+      if (debug) Serial.println("onewire attach");
+        
+      OneWire ds(atoi(pin));
+        
+      float temperature = getTemp(ds);
+      int val = temperature*100;
+      
+      if (debug) Serial.println(temperature);
+      
+      char m[8];
+      sprintf(m, "%s::%d", pin, val);
+      Serial.println(m);    
+  }  
 }
