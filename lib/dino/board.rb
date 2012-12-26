@@ -1,18 +1,19 @@
 module Dino
   class Board
-    attr_reader :digital_hardware, :analog_hardware, :one_wire_hardware
+    attr_reader :digital_hardware, :analog_hardware, :one_wire_hardware, :dht22_hardware
     LOW, HIGH = 000, 255
 
     def initialize(io)
-      @io, @digital_hardware, @analog_hardware, @one_wire_hardware = io, [], [], []
+      @io, @digital_hardware, @analog_hardware, @one_wire_hardware, @dht22_hardware = io, [], [], [],[]
       io.add_observer(self)
       send_clearing_bytes
       start_heart_beat
       start_one_wire
+      start_dht22
     end
 
     def update(pin, msg)
-      (@digital_hardware + @analog_hardware + @one_wire_hardware).each do |part|
+      (@digital_hardware + @analog_hardware + @one_wire_hardware + @dht22_hardware).each do |part|
         part.update(msg) if normalize_pin(pin) == normalize_pin(part.pin)
       end
     end
@@ -42,6 +43,15 @@ module Dino
 
     def remove_one_wire_hardware(part)
       @one_wire_hardware.delete(part)
+    end
+
+    def add_dht22_hardware(part)
+      set_pin_mode(part.pin, :in)
+      @dht22_hardware << part
+    end
+
+    def remove_dht22_hardware(part)
+      @dht22_hardware.delete(part)
     end
 
     def start_read
@@ -119,6 +129,17 @@ module Dino
           @one_wire_hardware.each do |part|
             pin = normalize_pin(part.pin)
             write("96#{pin}001") #read one_wire
+          end
+          sleep 2
+        end
+      end
+    end
+    def start_dht22
+      @dht22 ||= Thread.new do
+        loop do     
+          @dht22_hardware.each do |part|
+            pin = normalize_pin(part.pin)
+            write("95#{pin}001") #read dht22
           end
           sleep 2
         end

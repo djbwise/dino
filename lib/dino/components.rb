@@ -9,5 +9,6 @@ module Dino
     autoload :Stepper,    'dino/components/stepper'
     autoload :IrReceiver, 'dino/components/ir_receiver'
     autoload :OneWire,    'dino/components/one_wire'
+    autoload :DHT22,    'dino/components/dht22'
   end
 end
