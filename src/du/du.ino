@@ -2,9 +2,7 @@
 #include <OneWire.h> 
 #include <DHT22.h>
 
-#define DHT22_PIN 7
 
-DHT22 myDHT22(DHT22_PIN);
 
 bool debug = false;
 
@@ -20,6 +18,7 @@ Servo servo;
 
 void setup() {
   Serial.begin(115200);
+  //analogReference(INTERNAL);
 }
 
 void loop() {
@@ -330,12 +329,16 @@ void handleOneWire(char *pin, char *val, char *aux) {
       Serial.println(m);    
   } 
 }
+
  
  /*
  * Handle DHT22 commands
  * attach, detach
  */
 void handleDHT22(char *pin, char *val, char *aux) {
+  DHT22 myDHT22(atoi(pin));
+  
+  delay(2100);
   DHT22_ERROR_t errorCode = myDHT22.readData();
   switch(errorCode)
   {
