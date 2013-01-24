@@ -141,7 +141,7 @@ module Dino
             pin = normalize_pin(part.pin)
             write("95#{pin}001") #read dht22
           end
-          sleep 2
+          sleep 5
         end
       end
     end
