@@ -2,7 +2,7 @@
 #include <OneWire.h> 
 #include <DHT22.h>
 
-#define DHT22_PIN 7
+#define DHT22_PIN 8
 
 DHT22 myDHT22(DHT22_PIN);
 
@@ -337,43 +337,43 @@ void handleOneWire(char *pin, char *val, char *aux) {
  */
 void handleDHT22(char *pin, char *val, char *aux) {
   DHT22_ERROR_t errorCode = myDHT22.readData();
+  Serial.print(pin);
+  Serial.print("::");
+   
+   //we want to log this error so send the special log character
+  if(errorCode != DHT_ERROR_NONE && errorCode != DHT_ERROR_CHECKSUM)
+  {
+   // Serial.print("*");
+  }
+    
   switch(errorCode)
   {
     //kept the checksum error since it seems that it errors but reports correctly when the temps get negative
     case DHT_ERROR_NONE:
     case DHT_ERROR_CHECKSUM:
-  
-    Serial.print(pin);
-    Serial.print("::");
     Serial.print(myDHT22.getTemperatureC());
     Serial.print('|');
     Serial.println(myDHT22.getHumidity());
     break;
-   
-   /*   Serial.print("check sum error ");
-      Serial.print(myDHT22.getTemperatureC());
-      Serial.print("C ");
-      Serial.print(myDHT22.getHumidity());
-      Serial.println("%");
-      break;
-    case DHT_BUS_HUNG:
-      Serial.println("BUS Hung ");
+  
+    case DHT_BUS_HUNG: 
+     // Serial.println("BUS Hung ");
       break;
     case DHT_ERROR_NOT_PRESENT:
-      Serial.println("Not Present ");
+     // Serial.println("Not Present ");
       break;
     case DHT_ERROR_ACK_TOO_LONG:
-      Serial.println("ACK time out ");
+     // Serial.println("ACK time out ");
       break;
     case DHT_ERROR_SYNC_TIMEOUT:
-      Serial.println("Sync Timeout ");
+     // Serial.println("Sync Timeout ");
       break;
     case DHT_ERROR_DATA_TIMEOUT:
-      Serial.println("Data Timeout ");
+   //   Serial.println("Data Timeout ");
       break;
     case DHT_ERROR_TOOQUICK:
-      Serial.println("Polled to quick ");
-      break;*/
+    //  Serial.println("Polled to quick ");
+      break;
   }
 
    
