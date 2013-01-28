@@ -67,7 +67,7 @@ DHT22::DHT22(uint8_t pin)
 {
     _bitmask = digitalPinToBitMask(pin);
     _baseReg = portInputRegister(digitalPinToPort(pin));
-   // _lastReadTime = millis();
+    _lastReadTime = millis();
     _lastHumidity = DHT22_ERROR_VALUE;
     _lastTemperature = DHT22_ERROR_VALUE;
 }
@@ -100,12 +100,12 @@ DHT22_ERROR_t DHT22::readData()
 
     //EDIT: we removed this since we only call this once and don't loop
 
-  //if(currentTime - _lastReadTime < 100)
-  //{
+  if(currentTime - _lastReadTime < 100)
+  {
     // Caller needs to wait 2 seconds between each call to readData
-    //return DHT_ERROR_TOOQUICK;
-  //}
-  //_lastReadTime = currentTime;
+    return DHT_ERROR_TOOQUICK;
+  }
+  _lastReadTime = currentTime;
 
   // Pin needs to start HIGH, wait until it is HIGH with a timeout
   cli();

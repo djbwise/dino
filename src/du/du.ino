@@ -4,6 +4,8 @@
 
 bool debug = false;
 
+DHT22 myDHT22(8);
+
 int index = 0;
 
 char messageBuffer[12];
@@ -333,7 +335,7 @@ void handleOneWire(char *pin, char *val, char *aux) {
  * attach, detach
  */
 void handleDHT22(char *pin, char *val, char *aux) {
-  DHT22 myDHT22(atoi(pin));
+  
   
   DHT22_ERROR_t errorCode = myDHT22.readData();
   switch(errorCode)
