@@ -1,10 +1,14 @@
 #include <Servo.h>
 #include <OneWire.h> 
 #include <DHT22.h>
+#include <RunningAverage.h>
 
 bool debug = false;
 
 DHT22 myDHT22(8);
+
+RunningAverage myRA(50);
+int samples = 0;
 
 int index = 0;
 
@@ -18,6 +22,7 @@ Servo servo;
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Dino started.");
 }
 
 void loop() {
@@ -46,7 +51,7 @@ void process() {
 
 
   if (debug) {
-    Serial.println(messageBuffer);
+    //Serial.println(messageBuffer);
     //Serial.println(cmd);
     //Serial.println(pin);
     //Serial.println(val);
@@ -60,7 +65,7 @@ void process() {
     case 1:  dw(pin,val);               break;
     case 2:  dr(pin,val);               break;
     case 3:  aw(pin,val);               break;
-    case 4:  ar(pin,val);               break;
+    case 4:  ar(pin,val,aux);           break;
     case 95: handleDHT22(pin,val,aux);  break;
     case 96: handleOneWire(pin,val,aux);break;
     case 97: handlePing(pin,val,aux);   break;
@@ -103,6 +108,7 @@ void sm(char *pin, char *val) {
  * Digital write
  */
 void dw(char *pin, char *val) {
+  //Serial.println(val);
   if (debug) Serial.println("dw");
   int p = getPin(pin);
   if(p == -1) { if(debug) Serial.println("badpin"); return; }
@@ -131,13 +137,29 @@ void dr(char *pin, char *val) {
 /*
  * Analog read
  */
-void ar(char *pin, char *val) {
+void ar(char *pin, char *val, char *aux) {
   if(debug) Serial.println("ar");
   int p = getPin(pin);
   if(p == -1) { if(debug) Serial.println("badpin"); return; }
   pinMode(p, INPUT); // don't want to sw
   int rval = analogRead(p);
   char m[8];
+  
+  //average the buffer
+  aux = "1";
+  if (aux == "1"){
+    samples = 0;
+    myRA.clear();
+    int val=0;
+    while (samples < 250){
+      delay(2);
+      val = analogRead(p);
+      myRA.addValue(val);
+      samples++;
+    }
+    rval = (int) myRA.getAverage();
+  }
+  
   sprintf(m, "%s::%03d", pin, rval);
   Serial.println(m);
 }
@@ -369,6 +391,9 @@ void handleDHT22(char *pin, char *val, char *aux) {
     case DHT_ERROR_TOOQUICK:
       Serial.println("EPolled to quick ");
       break;
+    default:
+      Serial.println("Eunknown error");
+    break;
   }
  
 }
