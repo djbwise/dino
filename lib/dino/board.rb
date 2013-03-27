@@ -112,7 +112,7 @@ module Dino
     def start_heart_beat
       @heart_beat ||= Thread.new do
         loop do
-          sleep 0.5
+          sleep 1
           @digital_hardware.each do |part|
             digital_read(part.pin)
           end

@@ -151,7 +151,7 @@ void ar(char *pin, char *val, char *aux) {
     samples = 0;
     myRA.clear();
     int val=0;
-    while (samples < 250){
+    while (samples < 50){
       delay(2);
       val = analogRead(p);
       myRA.addValue(val);
